@@ -14,18 +14,11 @@ public class Main {
         System.out.println("Removed element count: " + originalList.stream().filter(i -> i == removedElement).count());
         System.out.println();
 
-        long sum = measureMethodPerformance("Sum of the elements", Main::findMissingElementBySum, originalList, copyList);
-        long sorting = measureMethodPerformance("Sorting and comparing", Main::findMissingElementBySorting, originalList, copyList);
-        long map = measureMethodPerformance("Using HashMap", Main::findMissingElementByHashMap, originalList, copyList);
+        long sumDuration = measureMethodPerformance("Sum of the elements", Main::findMissingElementBySum, originalList, copyList);
+        long sortingDuration = measureMethodPerformance("Sorting and comparing", Main::findMissingElementBySorting, originalList, copyList);
+        long mapDuration = measureMethodPerformance("Using HashMap", Main::findMissingElementByHashMap, originalList, copyList);
 
-        // Find the fastest method
-        if (sum < sorting && sum < map) {
-            System.out.println("Sum of the elements is the fastest method");
-        } else if (sorting < sum && sorting < map) {
-            System.out.println("Sorting and comparing is the fastest method");
-        } else {
-            System.out.println("Using HashMap is the fastest method");
-        }
+        determineFastestMethod(sumDuration, sortingDuration, mapDuration);
     }
 
     private static List<Integer> generateRandomList(int size, int bound) {
@@ -46,6 +39,16 @@ public class Main {
         System.out.println("Missing element: " + missingElement);
         System.out.println("Duration: " + duration + " ns");
         return duration;
+    }
+
+    private static void determineFastestMethod(long sumDuration, long sortingDuration, long mapDuration) {
+        if (sumDuration < sortingDuration && sumDuration < mapDuration) {
+            System.out.println("Sum of the elements is the fastest method");
+        } else if (sortingDuration < sumDuration && sortingDuration < mapDuration) {
+            System.out.println("Sorting and comparing is the fastest method");
+        } else {
+            System.out.println("Using HashMap is the fastest method");
+        }
     }
 
     private static int findMissingElementBySum(List<Integer> originalList, List<Integer> copyList) {
