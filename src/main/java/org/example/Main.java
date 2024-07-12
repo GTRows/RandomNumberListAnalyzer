@@ -1,11 +1,6 @@
 package org.example;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 
 public class Main {
 
@@ -13,21 +8,23 @@ public class Main {
         List<Integer> originalList = generateRandomList(100, 101);
         List<Integer> copyList = new ArrayList<>(originalList);
 
-        int randomIndex = new Random().nextInt(100);
+        int randomIndex = new Random().nextInt(originalList.size());
         int removedElement = copyList.remove(randomIndex);
         System.out.println("Removed element: " + removedElement);
+        System.out.println("Removed element count: " + originalList.stream().filter(i -> i == removedElement).count());
+        System.out.println();
 
-        long sum = measureMethodPerformance("Sum of the elements", Main::findMissingElementBySum, originalList, removedElement);
-        long sorting = measureMethodPerformance("Sorting and comparing", Main::findMissingElementBySorting, originalList, removedElement);
-        long hash = measureMethodPerformance("Using HashSet", Main::findMissingElementByHashSet, originalList, removedElement);
+        long sum = measureMethodPerformance("Sum of the elements", Main::findMissingElementBySum, originalList, copyList);
+        long sorting = measureMethodPerformance("Sorting and comparing", Main::findMissingElementBySorting, originalList, copyList);
+        long map = measureMethodPerformance("Using HashMap", Main::findMissingElementByHashMap, originalList, copyList);
 
         // Find the fastest method
-        if (sum < sorting && sum < hash) {
+        if (sum < sorting && sum < map) {
             System.out.println("Sum of the elements is the fastest method");
-        } else if (sorting < sum && sorting < hash) {
+        } else if (sorting < sum && sorting < map) {
             System.out.println("Sorting and comparing is the fastest method");
         } else {
-            System.out.println("Using HashSet is the fastest method");
+            System.out.println("Using HashMap is the fastest method");
         }
     }
 
@@ -40,9 +37,7 @@ public class Main {
         return list;
     }
 
-    private static long measureMethodPerformance(String methodName, MissingElementFinder method, List<Integer> originalList, int removedElement) {
-        List<Integer> copyList = new ArrayList<>(originalList);
-        copyList.remove(Integer.valueOf(removedElement));
+    private static long measureMethodPerformance(String methodName, MissingElementFinder method, List<Integer> originalList, List<Integer> copyList) {
         long startTime = System.nanoTime();
         int missingElement = method.findMissingElement(originalList, copyList);
         long endTime = System.nanoTime();
@@ -60,27 +55,28 @@ public class Main {
     }
 
     private static int findMissingElementBySorting(List<Integer> originalList, List<Integer> copyList) {
-        List<Integer> sortedOriginalList = new ArrayList<>(originalList);
-        List<Integer> sortedCopyList = new ArrayList<>(copyList);
-        Collections.sort(sortedOriginalList);
-        Collections.sort(sortedCopyList);
-
-        for (int i = 0; i < sortedCopyList.size(); i++) {
-            if (!sortedOriginalList.get(i).equals(sortedCopyList.get(i))) {
-                return sortedOriginalList.get(i);
+        Collections.sort(originalList);
+        Collections.sort(copyList);
+        for (int i = 0; i < copyList.size(); i++) {
+            if (!originalList.get(i).equals(copyList.get(i))) {
+                return originalList.get(i);
             }
         }
-        return sortedOriginalList.get(sortedOriginalList.size() - 1);
+        return originalList.get(originalList.size() - 1);
     }
 
-    private static int findMissingElementByHashSet(List<Integer> originalList, List<Integer> copyList) {
-        Set<Integer> originalSet = new HashSet<>(originalList);
-        Set<Integer> copySet = new HashSet<>(copyList);
-        originalSet.removeAll(copySet);
-        if (originalSet.isEmpty()) {
-            throw new IllegalStateException("No missing element found");
+    private static int findMissingElementByHashMap(List<Integer> originalList, List<Integer> copyList) {
+        Map<Integer, Integer> countMap = new HashMap<>();
+        for (int num : originalList) {
+            countMap.put(num, countMap.getOrDefault(num, 0) + 1);
         }
-        return originalSet.iterator().next();
+        for (int num : copyList) {
+            countMap.put(num, countMap.get(num) - 1);
+            if (countMap.get(num) == 0) {
+                countMap.remove(num);
+            }
+        }
+        return countMap.keySet().iterator().next();
     }
 
     @FunctionalInterface
